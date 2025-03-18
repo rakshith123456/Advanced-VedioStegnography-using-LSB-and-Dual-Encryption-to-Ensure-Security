@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Steganography</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Embed Secret Data into Video</h1>
+        <form id="embedForm" enctype="multipart/form-data">
+            <div>
+                <label for="video">Choose Video:</label>
+                <input type="file" name="video" accept="video/*" required>
+            </div>
+            <div>
+                <label for="secretData">Enter Secret Data:</label>
+                <textarea name="secretData" rows="4" required></textarea>
+            </div>
+            <button type="submit">Embed Data</button>
+        </form>
+
+        <!-- Display Encrypted Data -->
+        <div id="encryptedTextContainer" style="display:none;">
+            <h2>Encryption Results</h2>
+            <label for="FirstencryptedData">First Encrypted Data:</label> <textarea id="firstEncryptedData"></textarea>
+            <label for="SecondencryptedData">Second Encrypted Data:</label> <textarea
+                id="secondEncryptedData"></textarea>
+        </div>
+        <!-- Decryption Form -->
+        <form id="decryptForm" enctype="multipart/form-data">
+            <div>
+                <label for="encryptedVideo">Upload Encrypted Video:</label>
+                <input type="file" name="encryptedVideo" accept="video/*" required>
+            </div>
+            <button type="submit">Decrypt Data</button>
+        </form>
+
+        <!-- Display Decrypted Data -->
+        <div id="decryptedTextContainer" style="display:none;">
+            <h2>Decryption Result</h2>
+            <label for='decrypted'></label>Decrypted Data:</label> 
+            <textarea id="decryptedData"></textarea>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('embedForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+
+            const response = await fetch('/embed', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Received data:', data);
+                // Display encrypted data on the frontend
+                document.getElementById('firstEncryptedData').textContent = data.firstEncryptedData || 'No data';
+                document.getElementById('secondEncryptedData').textContent = data.secondEncryptedData || 'No data';
+                document.getElementById('encryptedTextContainer').style.display = 'block';
+            } else {
+                console.error('Failed to embed data');
+            }
+        });
+        document.getElementById('decryptForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const encryptedText = document.getElementById('secondEncryptedData').value; // Fetching from displayed data
+            const key = prompt("Enter the decryption key"); // Prompt for key entry or add input for key
+            console.log('Sending data:', { encryptedText, key }); 
+            const response = await fetch('/decrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ encryptedText, key })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('decryptedData').textContent = data.originalSecretData;
+                document.getElementById('decryptedTextContainer').style.display = 'block';
+            } else {
+                console.error('Failed to decrypt data');
+            }
+        });
+
+    </script>
+</body>
+
+</html>
